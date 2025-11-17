@@ -9,6 +9,7 @@ import com.google.firebase.cloud.FirestoreClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 
 @Configuration
@@ -16,9 +17,11 @@ public class FirebaseConfig {
 
     @Bean
     public FirebaseApp firebaseApp() throws IOException {
-        // This logic automatically finds the credentials from the GOOGLE_APPLICATION_CREDENTIALS environment variable.
+        // Load credentials from the .secrets directory
+        FileInputStream serviceAccount = new FileInputStream(".secrets/firebase-authkey.json");
+
         FirebaseOptions options = FirebaseOptions.builder()
-                .setCredentials(GoogleCredentials.getApplicationDefault())
+                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                 .build();
 
         // Initialize the app if it's not already initialized
