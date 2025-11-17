@@ -1,6 +1,5 @@
 package com.bydaffi.anypetbackend.models;
 
-import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -9,74 +8,58 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 /**
- * Entity representing a reminder for pet-related activities.
+ * POJO representing a reminder for pet-related activities.
+ * Reminders are stored only in Firebase Firestore.
  * Reminders can be scheduled at specific times and can repeat at defined intervals.
  */
-@Entity
-@Table(name = "reminders")
 @Getter
 @Setter
 @NoArgsConstructor
 public class Reminder {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     /**
-     * Firebase document ID for synchronization with Firestore
+     * Firebase document ID (primary identifier)
      */
-    @Column(unique = true)
-    private String firebaseId;
+    private String id;
 
     /**
      * Title of the reminder (e.g., "Alimentar a Luna", "Pasear a Rocky")
      */
-    @Column(nullable = false)
     private String title;
 
     /**
      * Detailed description or message for the reminder
      */
-    @Column(length = 500)
     private String message;
 
     /**
      * Time of day when the reminder should trigger (HH:mm format)
      */
-    @Column(nullable = false)
     private LocalTime scheduledTime;
 
     /**
      * Interval for repeating the reminder
      */
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private RepeatInterval repeatInterval;
 
     /**
      * User ID who owns this reminder (Firebase UID)
      */
-    @Column(nullable = false)
     private String userId;
 
     /**
      * Optional: associated pet ID
      */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pet_id")
-    private Pet pet;
+    private Long petId;
 
     /**
      * FCM device token for sending push notifications
      */
-    @Column(nullable = false)
     private String deviceToken;
 
     /**
      * Whether the reminder is currently active
      */
-    @Column(nullable = false)
     private boolean active = true;
 
     /**
@@ -92,7 +75,6 @@ public class Reminder {
     /**
      * Creation timestamp
      */
-    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     /**
@@ -100,17 +82,23 @@ public class Reminder {
      */
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
+    /**
+     * Initializes timestamps when creating a new reminder
+     */
+    public void initializeTimestamps() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
         updatedAt = LocalDateTime.now();
         if (nextExecution == null) {
             calculateNextExecution();
         }
     }
 
-    @PreUpdate
-    protected void onUpdate() {
+    /**
+     * Updates the updatedAt timestamp
+     */
+    public void updateTimestamp() {
         updatedAt = LocalDateTime.now();
     }
 

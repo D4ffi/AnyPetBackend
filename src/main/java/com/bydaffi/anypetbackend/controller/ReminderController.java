@@ -89,11 +89,9 @@ public class ReminderController {
             reminder.setScheduledTime(LocalTime.parse(request.getScheduledTime()));
             reminder.setRepeatInterval(Reminder.RepeatInterval.valueOf(request.getRepeatInterval()));
             reminder.setUserId(request.getUserId());
+            reminder.setPetId(request.getPetId());
             reminder.setDeviceToken(request.getDeviceToken());
             reminder.setActive(request.getActive() != null ? request.getActive() : true);
-
-            // Note: Pet association would require a PetRepository to fetch the Pet entity
-            // For now, we'll skip pet association or you can add it later
 
             Reminder created = reminderService.createReminder(reminder);
 
@@ -120,13 +118,13 @@ public class ReminderController {
     /**
      * Updates an existing reminder.
      *
-     * @param id Reminder ID
+     * @param id Reminder ID (Firebase document ID)
      * @param request Updated reminder data
      * @return Updated reminder
      */
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> updateReminder(
-            @PathVariable Long id,
+            @PathVariable String id,
             @RequestBody ReminderRequest request) {
         Map<String, Object> response = new HashMap<>();
 
@@ -137,8 +135,10 @@ public class ReminderController {
             reminder.setMessage(request.getMessage());
             reminder.setScheduledTime(LocalTime.parse(request.getScheduledTime()));
             reminder.setRepeatInterval(Reminder.RepeatInterval.valueOf(request.getRepeatInterval()));
+            reminder.setPetId(request.getPetId());
             reminder.setActive(request.getActive() != null ? request.getActive() : true);
             reminder.setDeviceToken(request.getDeviceToken());
+            reminder.setUserId(request.getUserId());
 
             Reminder updated = reminderService.updateReminder(id, reminder);
 
@@ -165,11 +165,11 @@ public class ReminderController {
     /**
      * Deletes a reminder.
      *
-     * @param id Reminder ID
+     * @param id Reminder ID (Firebase document ID)
      * @return Success message
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> deleteReminder(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> deleteReminder(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -257,11 +257,11 @@ public class ReminderController {
     /**
      * Gets a reminder by ID.
      *
-     * @param id Reminder ID
+     * @param id Reminder ID (Firebase document ID)
      * @return Reminder details
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getReminderById(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getReminderById(@PathVariable String id) {
         Map<String, Object> response = new HashMap<>();
 
         try {
@@ -281,33 +281,6 @@ public class ReminderController {
             log.error("Error fetching reminder {}: {}", id, e.getMessage(), e);
             response.put("success", false);
             response.put("message", "Failed to fetch reminder: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    /**
-     * Synchronizes reminders from Firestore to local database.
-     *
-     * @param userId User ID to sync reminders for
-     * @return Success message
-     */
-    @PostMapping("/sync/{userId}")
-    public ResponseEntity<Map<String, Object>> syncFromFirestore(@PathVariable String userId) {
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            reminderService.syncFromFirestore(userId);
-
-            response.put("success", true);
-            response.put("message", "Reminders synchronized successfully from Firestore");
-
-            log.info("Synced reminders from Firestore for user: {}", userId);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Error syncing reminders from Firestore for user {}: {}", userId, e.getMessage(), e);
-            response.put("success", false);
-            response.put("message", "Failed to sync reminders: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

@@ -17,15 +17,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ReminderResponse {
 
-    private Long id;
-    private String firebaseId;
+    private String id;
     private String title;
     private String message;
     private String scheduledTime;
     private String repeatInterval;
     private String userId;
     private Long petId;
-    private String petName;
     private boolean active;
     private LocalDateTime lastTriggered;
     private LocalDateTime nextExecution;
@@ -33,19 +31,17 @@ public class ReminderResponse {
     private LocalDateTime updatedAt;
 
     /**
-     * Creates a ReminderResponse from a Reminder entity
+     * Creates a ReminderResponse from a Reminder POJO
      */
     public static ReminderResponse fromEntity(Reminder reminder) {
         ReminderResponse response = new ReminderResponse();
         response.setId(reminder.getId());
-        response.setFirebaseId(reminder.getFirebaseId());
         response.setTitle(reminder.getTitle());
         response.setMessage(reminder.getMessage());
         response.setScheduledTime(reminder.getScheduledTime().toString());
         response.setRepeatInterval(reminder.getRepeatInterval().name());
         response.setUserId(reminder.getUserId());
-        response.setPetId(reminder.getPet() != null ? reminder.getPet().getId() : null);
-        response.setPetName(reminder.getPet() != null ? reminder.getPet().getName() : null);
+        response.setPetId(reminder.getPetId());
         response.setActive(reminder.isActive());
         response.setLastTriggered(reminder.getLastTriggered());
         response.setNextExecution(reminder.getNextExecution());
