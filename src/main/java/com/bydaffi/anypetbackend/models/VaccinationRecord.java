@@ -29,4 +29,22 @@ public class VaccinationRecord {
     private LocalDate nextDueDate;
 
     private String veterinarian;
+
+    /**
+     * URL of the vaccine batch/lot image stored in S3
+     * (Photo of the vaccine vial/box showing batch number)
+     */
+    @Column(length = 500)
+    private String batchImageUrl;
+
+    /**
+     * URL of the batch image thumbnail stored in S3
+     */
+    @Column(length = 500)
+    private String batchThumbnailUrl;
+
+    /**
+     * Batch/Lot number of the vaccine
+     */
+    private String batchNumber;
 }
