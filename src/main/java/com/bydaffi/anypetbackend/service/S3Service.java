@@ -38,17 +38,18 @@ public class S3Service {
      *
      * @param file the image file
      * @param petId the pet ID
+     * @param userId the Firebase user ID (owner of the pet)
      * @return the S3 URL of the uploaded image
      * @throws IOException if upload fails
      */
-    public String uploadPetProfileImage(MultipartFile file, Long petId) throws IOException {
+    public String uploadPetProfileImage(MultipartFile file, Long petId, String userId) throws IOException {
         validateImage(file);
 
         // Compress the image
         byte[] compressedImage = imageCompressionService.compressImage(file);
 
-        // Generate unique filename
-        String filename = generateFilename("pets/profiles", petId.toString(), file.getOriginalFilename());
+        // Generate unique filename with user-specific path
+        String filename = generateFilename("users/" + userId + "/pets/profiles", petId.toString(), file.getOriginalFilename());
 
         // Upload to S3
         return uploadToS3(compressedImage, filename, file.getContentType());
@@ -59,17 +60,18 @@ public class S3Service {
      *
      * @param file the image file
      * @param vaccinationRecordId the vaccination record ID
+     * @param userId the Firebase user ID (owner of the pet)
      * @return the S3 URL of the uploaded image
      * @throws IOException if upload fails
      */
-    public String uploadVaccineBatchImage(MultipartFile file, Long vaccinationRecordId) throws IOException {
+    public String uploadVaccineBatchImage(MultipartFile file, Long vaccinationRecordId, String userId) throws IOException {
         validateImage(file);
 
         // Compress the image
         byte[] compressedImage = imageCompressionService.compressImage(file);
 
-        // Generate unique filename
-        String filename = generateFilename("vaccines/batches", vaccinationRecordId.toString(), file.getOriginalFilename());
+        // Generate unique filename with user-specific path
+        String filename = generateFilename("users/" + userId + "/vaccines/batches", vaccinationRecordId.toString(), file.getOriginalFilename());
 
         // Upload to S3
         return uploadToS3(compressedImage, filename, file.getContentType());
@@ -81,17 +83,18 @@ public class S3Service {
      * @param file the original image file
      * @param type the type of image (pet or vaccine)
      * @param entityId the entity ID
+     * @param userId the Firebase user ID (owner of the pet)
      * @return the S3 URL of the uploaded thumbnail
      * @throws IOException if upload fails
      */
-    public String uploadThumbnail(MultipartFile file, String type, Long entityId) throws IOException {
+    public String uploadThumbnail(MultipartFile file, String type, Long entityId, String userId) throws IOException {
         validateImage(file);
 
         // Create thumbnail
         byte[] thumbnail = imageCompressionService.createThumbnail(file);
 
-        // Generate unique filename for thumbnail
-        String prefix = type.equals("pet") ? "pets/thumbnails" : "vaccines/thumbnails";
+        // Generate unique filename for thumbnail with user-specific path
+        String prefix = type.equals("pet") ? "users/" + userId + "/pets/thumbnails" : "users/" + userId + "/vaccines/thumbnails";
         String filename = generateFilename(prefix, entityId.toString(), file.getOriginalFilename());
 
         // Upload to S3

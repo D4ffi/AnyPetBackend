@@ -1,6 +1,8 @@
 package com.bydaffi.anypetbackend.controller;
 
 import com.bydaffi.anypetbackend.service.S3Service;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseToken;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,27 +20,50 @@ import java.util.Map;
 public class ImageUploadController {
 
     private final S3Service s3Service;
+    private final FirebaseAuth firebaseAuth;
 
-    public ImageUploadController(S3Service s3Service) {
+    public ImageUploadController(S3Service s3Service, FirebaseAuth firebaseAuth) {
         this.s3Service = s3Service;
+        this.firebaseAuth = firebaseAuth;
+    }
+
+    /**
+     * Helper method to verify Firebase token and extract user ID
+     */
+    private String verifyTokenAndGetUserId(String authHeader) throws Exception {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Missing or invalid Authorization header");
+        }
+
+        String token = authHeader.substring(7);
+        FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
+        return decodedToken.getUid();
     }
 
     /**
      * POST /api/images/pet/{petId}/profile
      * Upload a profile image for a pet
      *
+     * Requires Firebase Authentication token in Authorization header
+     *
      * @param petId the pet ID
      * @param file the image file
+     * @param authorization Firebase auth token (Bearer token)
      * @return response with image URL
      */
     @PostMapping("/pet/{petId}/profile")
     public ResponseEntity<ImageUploadResponse> uploadPetProfileImage(
             @PathVariable Long petId,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader("Authorization") String authorization) {
 
         try {
-            String imageUrl = s3Service.uploadPetProfileImage(file, petId);
-            String thumbnailUrl = s3Service.uploadThumbnail(file, "pet", petId);
+            // Verify Firebase token and get user ID
+            String userId = verifyTokenAndGetUserId(authorization);
+
+            // Upload image with user ID for proper S3 organization
+            String imageUrl = s3Service.uploadPetProfileImage(file, petId, userId);
+            String thumbnailUrl = s3Service.uploadThumbnail(file, "pet", petId, userId);
 
             ImageUploadResponse response = new ImageUploadResponse(
                     true,
@@ -51,6 +76,16 @@ public class ImageUploadController {
 
             return ResponseEntity.ok(response);
 
+        } catch (IllegalArgumentException e) {
+            ImageUploadResponse errorResponse = new ImageUploadResponse(
+                    false,
+                    "Authentication failed: " + e.getMessage(),
+                    null,
+                    null,
+                    petId,
+                    "PET_PROFILE"
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         } catch (Exception e) {
             ImageUploadResponse errorResponse = new ImageUploadResponse(
                     false,
@@ -68,18 +103,26 @@ public class ImageUploadController {
      * POST /api/images/vaccine/{vaccinationRecordId}/batch
      * Upload a batch lot image for a vaccination record
      *
+     * Requires Firebase Authentication token in Authorization header
+     *
      * @param vaccinationRecordId the vaccination record ID
      * @param file the image file
+     * @param authorization Firebase auth token (Bearer token)
      * @return response with image URL
      */
     @PostMapping("/vaccine/{vaccinationRecordId}/batch")
     public ResponseEntity<ImageUploadResponse> uploadVaccineBatchImage(
             @PathVariable Long vaccinationRecordId,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader("Authorization") String authorization) {
 
         try {
-            String imageUrl = s3Service.uploadVaccineBatchImage(file, vaccinationRecordId);
-            String thumbnailUrl = s3Service.uploadThumbnail(file, "vaccine", vaccinationRecordId);
+            // Verify Firebase token and get user ID
+            String userId = verifyTokenAndGetUserId(authorization);
+
+            // Upload image with user ID for proper S3 organization
+            String imageUrl = s3Service.uploadVaccineBatchImage(file, vaccinationRecordId, userId);
+            String thumbnailUrl = s3Service.uploadThumbnail(file, "vaccine", vaccinationRecordId, userId);
 
             ImageUploadResponse response = new ImageUploadResponse(
                     true,
@@ -92,6 +135,16 @@ public class ImageUploadController {
 
             return ResponseEntity.ok(response);
 
+        } catch (IllegalArgumentException e) {
+            ImageUploadResponse errorResponse = new ImageUploadResponse(
+                    false,
+                    "Authentication failed: " + e.getMessage(),
+                    null,
+                    null,
+                    vaccinationRecordId,
+                    "VACCINE_BATCH"
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         } catch (Exception e) {
             ImageUploadResponse errorResponse = new ImageUploadResponse(
                     false,

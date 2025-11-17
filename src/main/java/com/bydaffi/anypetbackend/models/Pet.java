@@ -19,6 +19,12 @@ public abstract class Pet {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Firebase User ID of the pet owner
+     */
+    @Column(nullable = false)
+    private String userId;
+
     private String name;
     private String race;
     private int age;
