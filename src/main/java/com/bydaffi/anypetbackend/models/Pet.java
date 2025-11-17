@@ -25,6 +25,18 @@ public abstract class Pet {
     private float weight;
     private boolean healthStatus;
 
+    /**
+     * URL of the pet's profile image stored in S3
+     */
+    @Column(length = 500)
+    private String profileImageUrl;
+
+    /**
+     * URL of the pet's profile thumbnail stored in S3
+     */
+    @Column(length = 500)
+    private String profileThumbnailUrl;
+
     @OneToMany(mappedBy = "pet", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VaccinationRecord> vaccinationRecords = new ArrayList<>();
 
