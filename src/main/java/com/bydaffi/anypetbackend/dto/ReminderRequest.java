@@ -42,9 +42,9 @@ public class ReminderRequest {
     private String userId;
 
     /**
-     * Optional: Pet ID associated with this reminder
+     * Optional: Pet ID associated with this reminder (Firebase document ID)
      */
-    private Long petId;
+    private String petId;
 
     /**
      * FCM device token for sending notifications

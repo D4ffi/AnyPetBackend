@@ -48,9 +48,9 @@ public class Reminder {
     private String userId;
 
     /**
-     * Optional: associated pet ID
+     * Optional: associated pet ID (Firebase document ID)
      */
-    private Long petId;
+    private String petId;
 
     /**
      * FCM device token for sending push notifications

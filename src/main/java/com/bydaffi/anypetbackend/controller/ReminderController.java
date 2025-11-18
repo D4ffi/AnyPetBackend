@@ -76,10 +76,10 @@ public class ReminderController {
                 return ResponseEntity.badRequest().body(response);
             }
 
+            // Device token is optional for testing purposes
+            // If missing, the reminder will be created but notifications won't be sent
             if (request.getDeviceToken() == null || request.getDeviceToken().trim().isEmpty()) {
-                response.put("success", false);
-                response.put("message", "Device token is required");
-                return ResponseEntity.badRequest().body(response);
+                log.warn("Creating reminder without device token for user: {}", request.getUserId());
             }
 
             // Convert DTO to entity

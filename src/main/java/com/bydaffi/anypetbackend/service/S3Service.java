@@ -25,6 +25,9 @@ public class S3Service {
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
 
+    @Value("${aws.s3.region}")
+    private String region;
+
     @Value("${app.image.max-size-mb:10}")
     private int maxSizeMB;
 
@@ -204,8 +207,9 @@ public class S3Service {
 
             s3Client.putObject(putRequest, RequestBody.fromBytes(imageBytes));
 
-            // Return the S3 URL
-            return String.format("https://%s.s3.amazonaws.com/%s", bucketName, key);
+            // Return the S3 URL with region
+            // Format: https://bucket-name.s3.region.amazonaws.com/key
+            return String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, key);
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload image to S3: " + e.getMessage(), e);
         }

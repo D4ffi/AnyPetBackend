@@ -23,7 +23,7 @@ public class ReminderResponse {
     private String scheduledTime;
     private String repeatInterval;
     private String userId;
-    private Long petId;
+    private String petId;
     private boolean active;
     private LocalDateTime lastTriggered;
     private LocalDateTime nextExecution;

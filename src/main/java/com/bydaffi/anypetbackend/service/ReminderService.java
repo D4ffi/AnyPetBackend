@@ -210,6 +210,14 @@ public class ReminderService {
      * @param reminder Reminder to send notification for
      */
     private void sendReminderNotification(Reminder reminder) throws FirebaseMessagingException {
+        // Check if device token is available
+        if (reminder.getDeviceToken() == null ||
+            reminder.getDeviceToken().trim().isEmpty() ||
+            reminder.getDeviceToken().equals("no-token-available")) {
+            log.warn("Skipping notification for reminder: {} - No valid device token", reminder.getId());
+            return;
+        }
+
         PushNotificationRequest notificationRequest = new PushNotificationRequest();
         notificationRequest.setTitle(reminder.getTitle());
         notificationRequest.setMessage(reminder.getMessage() != null ? reminder.getMessage() : "Es hora de tu recordatorio");
@@ -259,8 +267,8 @@ public class ReminderService {
         reminder.setRepeatInterval(Reminder.RepeatInterval.valueOf(document.getString("repeatInterval")));
         reminder.setUserId(document.getString("userId"));
 
-        Long petId = document.getLong("petId");
-        reminder.setPetId(petId);
+        // Pet ID is now a Firebase document ID (String)
+        reminder.setPetId(document.getString("petId"));
 
         reminder.setDeviceToken(document.getString("deviceToken"));
         reminder.setActive(Boolean.TRUE.equals(document.getBoolean("active")));
