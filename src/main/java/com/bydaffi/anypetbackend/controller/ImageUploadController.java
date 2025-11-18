@@ -159,6 +159,79 @@ public class ImageUploadController {
     }
 
     /**
+     * POST /api/images/user/{userId}/profile
+     * Upload a profile image for a user
+     *
+     * Requires Firebase Authentication token in Authorization header
+     * The authenticated user must match the userId in the path
+     *
+     * @param userId the user ID
+     * @param file the image file
+     * @param authorization Firebase auth token (Bearer token)
+     * @return response with image URL
+     */
+    @PostMapping("/user/{userId}/profile")
+    public ResponseEntity<ImageUploadResponse> uploadUserProfileImage(
+            @PathVariable String userId,
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader("Authorization") String authorization) {
+
+        try {
+            // Verify Firebase token and get authenticated user ID
+            String authenticatedUserId = verifyTokenAndGetUserId(authorization);
+
+            // Verify that the authenticated user matches the requested userId
+            if (!authenticatedUserId.equals(userId)) {
+                ImageUploadResponse errorResponse = new ImageUploadResponse(
+                        false,
+                        "Unauthorized: Cannot upload profile image for another user",
+                        null,
+                        null,
+                        null,
+                        "USER_PROFILE"
+                );
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+            }
+
+            // Upload image
+            String imageUrl = s3Service.uploadUserProfileImage(file, userId);
+            String thumbnailUrl = s3Service.uploadThumbnail(file, "user", null, userId);
+
+            ImageUploadResponse response = new ImageUploadResponse(
+                    true,
+                    "User profile image uploaded successfully",
+                    imageUrl,
+                    thumbnailUrl,
+                    null,
+                    "USER_PROFILE"
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalArgumentException e) {
+            ImageUploadResponse errorResponse = new ImageUploadResponse(
+                    false,
+                    "Authentication failed: " + e.getMessage(),
+                    null,
+                    null,
+                    null,
+                    "USER_PROFILE"
+            );
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        } catch (Exception e) {
+            ImageUploadResponse errorResponse = new ImageUploadResponse(
+                    false,
+                    "Failed to upload image: " + e.getMessage(),
+                    null,
+                    null,
+                    null,
+                    "USER_PROFILE"
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
      * DELETE /api/images
      * Delete an image from S3
      *
