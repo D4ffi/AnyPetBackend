@@ -166,15 +166,18 @@ public class ReminderService {
         LocalDateTime now = LocalDateTime.now();
         Timestamp nowTimestamp = Timestamp.of(java.util.Date.from(now.atZone(ZoneId.systemDefault()).toInstant()));
 
-        // Query Firestore for active reminders that are due
+        // Query Firestore for active reminders
+        // Note: Filtering by nextExecution in-memory to avoid index requirement
+        // TODO: Remove in-memory filtering once Firestore composite index is created
         ApiFuture<QuerySnapshot> future = firestore.collection(REMINDERS_COLLECTION)
                 .whereEqualTo("active", true)
-                .whereLessThanOrEqualTo("nextExecution", nowTimestamp)
                 .get();
 
         QuerySnapshot querySnapshot = future.get();
         List<Reminder> dueReminders = querySnapshot.getDocuments().stream()
                 .map(this::convertFromFirestore)
+                .filter(reminder -> reminder.getNextExecution() != null &&
+                        !reminder.getNextExecution().isAfter(now))
                 .collect(Collectors.toList());
 
         log.info("Processing {} due reminders", dueReminders.size());
