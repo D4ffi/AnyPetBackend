@@ -78,11 +78,32 @@ public class S3Service {
     }
 
     /**
+     * Uploads a user profile image to S3
+     *
+     * @param file the image file
+     * @param userId the Firebase user ID
+     * @return the S3 URL of the uploaded image
+     * @throws IOException if upload fails
+     */
+    public String uploadUserProfileImage(MultipartFile file, String userId) throws IOException {
+        validateImage(file);
+
+        // Compress the image
+        byte[] compressedImage = imageCompressionService.compressImage(file);
+
+        // Generate unique filename with user-specific path
+        String filename = generateFilename("users/" + userId + "/profile", "avatar", file.getOriginalFilename());
+
+        // Upload to S3
+        return uploadToS3(compressedImage, filename, file.getContentType());
+    }
+
+    /**
      * Uploads a thumbnail version of an image
      *
      * @param file the original image file
-     * @param type the type of image (pet or vaccine)
-     * @param entityId the entity ID
+     * @param type the type of image (pet, vaccine, or user)
+     * @param entityId the entity ID (can be null for user type)
      * @param userId the Firebase user ID (owner of the pet)
      * @return the S3 URL of the uploaded thumbnail
      * @throws IOException if upload fails
@@ -94,8 +115,21 @@ public class S3Service {
         byte[] thumbnail = imageCompressionService.createThumbnail(file);
 
         // Generate unique filename for thumbnail with user-specific path
-        String prefix = type.equals("pet") ? "users/" + userId + "/pets/thumbnails" : "users/" + userId + "/vaccines/thumbnails";
-        String filename = generateFilename(prefix, entityId.toString(), file.getOriginalFilename());
+        String prefix;
+        String entityIdStr;
+
+        if (type.equals("pet")) {
+            prefix = "users/" + userId + "/pets/thumbnails";
+            entityIdStr = entityId.toString();
+        } else if (type.equals("user")) {
+            prefix = "users/" + userId + "/profile/thumbnails";
+            entityIdStr = "avatar";
+        } else {
+            prefix = "users/" + userId + "/vaccines/thumbnails";
+            entityIdStr = entityId.toString();
+        }
+
+        String filename = generateFilename(prefix, entityIdStr, file.getOriginalFilename());
 
         // Upload to S3
         return uploadToS3(thumbnail, filename, file.getContentType());
